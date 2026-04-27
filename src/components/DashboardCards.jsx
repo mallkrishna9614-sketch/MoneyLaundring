@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import API from "../config";
 import "../App.css";
 
 const CARD_CONFIG = [
@@ -16,56 +15,18 @@ export default function DashboardCards() {
     fraudDetected: 0,
     highRiskUsers: 0,
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchMetrics = async (retries = 3) => {
-      try {
-        const res = await fetch(`${API}/metrics`);
-        if (!res.ok) throw new Error("API failed");
-        const data = await res.json();
-        setStats({
-          totalUsers: data.total_users || 0,
-          totalTransactions: data.total_transactions || 0,
-          fraudDetected: data.fraud_cases || 0,
-          highRiskUsers: data.high_risk_users || 0,
-        });
-        setLoading(false);
-      } catch (err) {
-        if (retries > 0) {
-          setTimeout(() => fetchMetrics(retries - 1), 2000);
-        } else {
-          setError("Backend not responding");
-          setLoading(false);
-        }
-      }
-    };
-    fetchMetrics();
+    fetch("http://127.0.0.1:5000/metrics")
+      .then(r => r.json())
+      .then(data => setStats({
+        totalUsers: data.total_users || 0,
+        totalTransactions: data.total_transactions || 0,
+        fraudDetected: data.fraud_cases || 0,
+        highRiskUsers: data.high_risk_users || 0,
+      }))
+      .catch(() => {});
   }, []);
-
-  if (loading) {
-    return (
-      <div className="card-container" style={{ justifyContent: "center", padding: "40px" }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", color: "var(--text-muted)" }}>
-          <div style={{ animation: "spin 1.5s linear infinite", fontSize: "24px", display: "inline-block" }}>◎</div>
-          <div>Loading metrics...</div>
-          <div style={{ fontSize: "12px", opacity: 0.7 }}>Waking up backend...</div>
-        </div>
-        <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="card-container" style={{ justifyContent: "center", padding: "40px" }}>
-        <div style={{ color: "#ff4d6d", padding: "20px", background: "rgba(255, 77, 109, 0.1)", borderRadius: "10px", border: "1px solid rgba(255, 77, 109, 0.2)" }}>
-          ⚠ {error}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="card-container">

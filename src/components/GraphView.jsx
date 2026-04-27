@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Network } from "vis-network/standalone";
-import API from "../config";
 import "../App.css";
+
+const API = "https://backend-e7kt.onrender.com"; // ✅ ADDED
 
 export default function GraphView() {
   const containerRef = useRef(null);
@@ -11,22 +12,19 @@ export default function GraphView() {
   const [nodeCount, setNodeCount] = useState(0);
   const [edgeCount, setEdgeCount] = useState(0);
 
-  const fetchGraph = async (retries = 3) => {
-    try {
-      const res = await fetch(`${API}/graph`);
-      if (!res.ok) throw new Error();
-      return await res.json();
-    } catch {
-      if (retries > 0) {
-        await new Promise(r => setTimeout(r, 2000));
-        return fetchGraph(retries - 1); // retry
-      }
-      throw new Error("Backend not responding");
-    }
-  };
-
+  const fetchGraph = async () => {
+  try {
+    const res = await fetch(`${API}/graph`);
+    if (!res.ok) throw new Error();
+    return await res.json();
+  } catch {
+    await new Promise(r => setTimeout(r, 2000));
+    return fetchGraph(); // retry
+  }
+};
   useEffect(() => {
-    fetchGraph()
+    fetch(`${API}/graph`) // ✅ FIXED
+      .then(r => r.json())
       .then(graphData => {
         setNodeCount(graphData.nodes?.length || 0);
         setEdgeCount(graphData.edges?.length || 0);
@@ -111,19 +109,14 @@ export default function GraphView() {
 
           try {
             const res = await fetch(`${API}/analyze/${userId}`); // ✅ FIXED
-            if (!res.ok) throw new Error("API failed");
             const data = await res.json();
             setPopup(data);
           } catch {
             console.log("Error fetching user data");
-            alert("Backend not responding. Could not fetch user data.");
           }
         });
       })
-      .catch(() => {
-        setLoading(false);
-        alert("Backend not responding. Could not load graph data.");
-      });
+      .catch(() => setLoading(false));
 
     return () => networkRef.current?.destroy();
   }, []);
@@ -185,14 +178,6 @@ export default function GraphView() {
                 color: "var(--text-muted)"
               }}>
                 Loading graph…
-              </span>
-              <span style={{
-                fontFamily: "var(--mono)",
-                fontSize: 10,
-                color: "var(--text-muted)",
-                opacity: 0.7
-              }}>
-                (Waking up backend...)
               </span>
             </div>
           )}

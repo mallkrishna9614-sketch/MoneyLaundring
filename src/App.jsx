@@ -6,7 +6,6 @@ import Header from "./components/Header";
 import DashboardCards from "./components/DashboardCards";
 import GraphView from "./components/GraphView";
 import Settings from "./components/Settings";
-import API from "./config";
 import "./App.css";
 
 export default function App() {
@@ -16,34 +15,25 @@ export default function App() {
   // 🔥 Analyzer state
   const [userId, setUserId] = useState("");
   const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  const handleAnalyze = async () => {
-    if (!userId) return;
-    setLoading(true);
-    setError(null);
-    setResult(null);
+const API = "https://backend-e7kt.onrender.com";
 
-    const fetchAnalyze = async (retries = 2) => {
-      try {
-        const res = await fetch(`${API}/analyze/${userId}`);
-        if (!res.ok) throw new Error("API failed");
-        const data = await res.json();
-        setResult(data);
-        setLoading(false);
-      } catch (err) {
-        if (retries > 0) {
-          setTimeout(() => fetchAnalyze(retries - 1), 2000);
-        } else {
-          setError("Backend not responding");
-          setLoading(false);
-        }
-      }
-    };
-    
-    fetchAnalyze();
-  };
+const handleAnalyze = async () => {
+  if (!userId) return;
+
+  try {
+    const res = await fetch(`${API}/analyze/${userId}`);
+
+    if (!res.ok) {
+      throw new Error("API failed");
+    }
+
+    const data = await res.json();
+    setResult(data);
+  } catch (err) {
+    console.error("Error:", err);
+  }
+};
 
   /* ---------- SCREENS ---------- */
   if (screen === "landing") {
@@ -95,26 +85,12 @@ export default function App() {
                     onChange={(e) => setUserId(e.target.value)}
                     placeholder="Enter User ID"
                     style={styles.input}
-                    disabled={loading}
                   />
 
-                  <button onClick={handleAnalyze} style={styles.button} disabled={loading}>
-                    {loading ? "Analyzing..." : "Analyze →"}
+                  <button onClick={handleAnalyze} style={styles.button}>
+                    Analyze →
                   </button>
                 </div>
-
-                {loading && (
-                  <div style={{ marginTop: "20px", textAlign: "center", color: "#aaa" }}>
-                     <div style={{ fontSize: 24, animation: "spin 1.5s linear infinite", display: "inline-block", marginBottom: "8px" }}>◎</div>
-                     <div>Analyzing... (Backend might be starting)</div>
-                  </div>
-                )}
-
-                {error && (
-                  <div style={{ marginTop: "20px", color: "#ff4d6d", padding: "10px", background: "rgba(255, 77, 109, 0.1)", borderRadius: "8px" }}>
-                    ⚠ {error}
-                  </div>
-                )}
 
                 {/* RESULT */}
                 {result && (
