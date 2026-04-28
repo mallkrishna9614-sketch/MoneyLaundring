@@ -16,24 +16,19 @@ export default function App() {
   const [userId, setUserId] = useState("");
   const [result, setResult] = useState(null);
 
-const API = "https://backend-e7kt.onrender.com";
+  const handleAnalyze = async () => {
+    if (!userId) return;
 
-const handleAnalyze = async () => {
-  if (!userId) return;
-
-  try {
-    const res = await fetch(`${API}/analyze/${userId}`);
-
-    if (!res.ok) {
-      throw new Error("API failed");
+    try {
+      const res = await fetch(
+  `https://backend-e7kt.onrender.com/analyze/${userId}`
+);
+      const data = await res.json();
+      setResult(data);
+    } catch (err) {
+      console.error("Error:", err);
     }
-
-    const data = await res.json();
-    setResult(data);
-  } catch (err) {
-    console.error("Error:", err);
-  }
-};
+  };
 
   /* ---------- SCREENS ---------- */
   if (screen === "landing") {

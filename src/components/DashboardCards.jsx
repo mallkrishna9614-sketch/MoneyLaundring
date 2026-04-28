@@ -17,7 +17,7 @@ export default function DashboardCards() {
   });
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/metrics")
+    fetch("https://backend-e7kt.onrender.com/metrics")
       .then(r => r.json())
       .then(data => setStats({
         totalUsers: data.total_users || 0,

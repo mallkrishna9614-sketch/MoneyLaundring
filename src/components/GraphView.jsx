@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Network } from "vis-network/standalone";
 import "../App.css";
 
-const API = "https://backend-e7kt.onrender.com"; // ✅ ADDED
-
 export default function GraphView() {
   const containerRef = useRef(null);
   const networkRef = useRef(null);
@@ -12,18 +10,8 @@ export default function GraphView() {
   const [nodeCount, setNodeCount] = useState(0);
   const [edgeCount, setEdgeCount] = useState(0);
 
-  const fetchGraph = async () => {
-  try {
-    const res = await fetch(`${API}/graph`);
-    if (!res.ok) throw new Error();
-    return await res.json();
-  } catch {
-    await new Promise(r => setTimeout(r, 2000));
-    return fetchGraph(); // retry
-  }
-};
   useEffect(() => {
-    fetch(`${API}/graph`) // ✅ FIXED
+    fetch("https://backend-e7kt.onrender.com/graph")
       .then(r => r.json())
       .then(graphData => {
         setNodeCount(graphData.nodes?.length || 0);
@@ -32,45 +20,70 @@ export default function GraphView() {
         const styledData = {
           nodes: (graphData.nodes || []).map(n => ({
             ...n,
+
+            // 🔥 BETTER LOOK
             size: 18,
             shape: "dot",
-            font: { color: "#ffffff", size: 12, face: "Inter" },
+
+            font: {
+              color: "#ffffff",
+              size: 12,
+              face: "Inter"
+            },
+
             color: {
               background:
                 n.color === "red" ? "#ff4d6d" :
                 n.color === "orange" ? "#ffa500" :
                 "#00bfff",
+
               border:
                 n.color === "red" ? "#ff1e4d" :
                 n.color === "orange" ? "#ff8800" :
                 "#0099ff",
+
               highlight: {
                 background: "#ffffff",
                 border: "#ffffff"
               }
             },
+
             borderWidth: 2,
             borderWidthSelected: 3,
           })),
 
           edges: (graphData.edges || []).map(e => ({
             ...e,
+
             width: e.color === "#ff5555" ? 2.5 : 1,
+
             color: {
               color: e.color === "#ff5555"
                 ? "rgba(255,80,80,0.8)"
                 : "rgba(200,200,255,0.2)",
+
               highlight: "#ffffff"
             },
-            smooth: { type: "continuous" }
+
+            smooth: {
+              type: "continuous"
+            }
           })),
         };
 
         const options = {
-          nodes: { font: { color: "#fff" } },
-          edges: { arrows: { to: { enabled: true, scaleFactor: 0.6 } } },
+          nodes: {
+            font: { color: "#fff" }
+          },
+
+          edges: {
+            arrows: { to: { enabled: true, scaleFactor: 0.6 } }
+          },
+
+          // 🔥 MUCH BETTER PHYSICS
           physics: {
             solver: "forceAtlas2Based",
+
             forceAtlas2Based: {
               gravitationalConstant: -80,
               centralGravity: 0.01,
@@ -78,8 +91,12 @@ export default function GraphView() {
               springConstant: 0.04,
               damping: 0.6
             },
-            stabilization: { iterations: 200 }
+
+            stabilization: {
+              iterations: 200
+            }
           },
+
           interaction: {
             hover: true,
             tooltipDelay: 150,
@@ -87,12 +104,15 @@ export default function GraphView() {
             navigationButtons: true,
             zoomView: true,
             dragView: true
-          }
+          },
+
+          background: { color: "transparent" }
         };
 
         networkRef.current = new Network(containerRef.current, styledData, options);
         setLoading(false);
 
+        // 🔥 CLICK EVENT UPGRADE
         networkRef.current.on("click", async ({ nodes }) => {
           if (!nodes.length) {
             setPopup(null);
@@ -101,6 +121,7 @@ export default function GraphView() {
 
           const userId = nodes[0];
 
+          // 🔥 FOCUS + HIGHLIGHT
           networkRef.current.selectNodes(nodes);
           networkRef.current.focus(userId, {
             scale: 1.3,
@@ -108,7 +129,7 @@ export default function GraphView() {
           });
 
           try {
-            const res = await fetch(`${API}/analyze/${userId}`); // ✅ FIXED
+            const res = await fetch(`https://backend-e7kt.onrender.com/analyze/${userId}`);
             const data = await res.json();
             setPopup(data);
           } catch {
@@ -125,7 +146,6 @@ export default function GraphView() {
 
   return (
     <>
-      {/* UI SAME — NOT CHANGED */}
       <div className="graph-section">
         <div className="graph-header">
           <span className="graph-title">Transaction Network</span>
@@ -186,6 +206,7 @@ export default function GraphView() {
         </div>
       </div>
 
+      {/* POPUP */}
       {popup && (
         <div className="node-popup">
           <button className="popup-close" onClick={() => setPopup(null)}>✕</button>
